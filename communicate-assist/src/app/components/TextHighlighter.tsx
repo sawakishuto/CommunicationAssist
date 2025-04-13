@@ -14,27 +14,27 @@ export default function TextHighlighter() {
   const [comparisonText, setComparisonText] = useState('example');
   const [isFocused, setIsFocused] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
-  const [isComposing, setIsComposing] = useState(false); // Track IME composition state
+  const [isComposing, setIsComposing] = useState(false); // IMEの入力状態を追跡
   const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, text: '' });
   const inputRef = useRef<HTMLDivElement>(null);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // This function checks if parts of the input match the comparison text
-  // and returns an array of segments with information about whether they should be underlined
+  // この関数は、入力テキストの一部が比較テキストと一致するかどうかをチェックし、
+  // 下線を引くべきかどうかの情報を持つセグメントの配列を返します
   const getHighlightedSegments = () => {
     if (!inputText) return [{ text: '', highlight: false }];
     
-    // Case-insensitive search for the comparison text within input
+    // 入力テキスト内で比較テキストを大文字/小文字を区別せずに検索
     const lowerInput = inputText.toLowerCase();
     const lowerComparison = comparisonText.toLowerCase();
     
     const segments = [];
     let currentIndex = 0;
     
-    // Find all occurrences of the comparison text in the input
+    // 入力内の比較テキストのすべての出現箇所を見つける
     let matchIndex = lowerInput.indexOf(lowerComparison);
     while (matchIndex !== -1 && currentIndex <= inputText.length) {
-      // Add non-matching segment before match (if any)
+      // 一致する前の非一致セグメントを追加（もしあれば）
       if (matchIndex > currentIndex) {
         segments.push({
           text: inputText.substring(currentIndex, matchIndex),
@@ -42,20 +42,20 @@ export default function TextHighlighter() {
         });
       }
       
-      // Add matching segment
+      // 一致するセグメントを追加
       segments.push({
         text: inputText.substring(matchIndex, matchIndex + lowerComparison.length),
         highlight: true
       });
       
-      // Move current index past this match
+      // 現在のインデックスをこの一致を超えて移動
       currentIndex = matchIndex + lowerComparison.length;
       
-      // Find next match
+      // 次の一致を見つける
       matchIndex = lowerInput.indexOf(lowerComparison, currentIndex);
     }
     
-    // Add remaining text after last match (if any)
+    // 最後の一致の後の残りのテキストを追加（もしあれば）
     if (currentIndex < inputText.length) {
       segments.push({
         text: inputText.substring(currentIndex),
@@ -70,14 +70,14 @@ export default function TextHighlighter() {
     setComparisonText(e.target.value);
   };
 
-  // Save current cursor position before updating content
+  // コンテンツを更新する前に現在のカーソル位置を保存
   const saveCursorPosition = () => {
     if (inputRef.current && window.getSelection) {
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         if (inputRef.current.contains(range.startContainer)) {
-          // Calculate the cursor position by measuring text content up to cursor
+          // カーソルまでのテキスト内容を測定してカーソル位置を計算
           let currentNode = inputRef.current.firstChild;
           let totalLength = 0;
           let cursorFound = false;
@@ -89,7 +89,7 @@ export default function TextHighlighter() {
             } else if (currentNode.nodeType === Node.TEXT_NODE) {
               totalLength += currentNode.textContent?.length || 0;
             } else if (currentNode.nodeType === Node.ELEMENT_NODE && currentNode.childNodes.length > 0) {
-              // For element nodes with children, go through each child
+              // 子要素を持つ要素ノードの場合、各子要素を調べる
               let childNode = currentNode.firstChild;
               while (childNode) {
                 if (childNode === range.startContainer) {
@@ -112,9 +112,9 @@ export default function TextHighlighter() {
     }
   };
 
-  // Handle text input changes in the contentEditable div
+  // contentEditableのdivのテキスト入力変更を処理
   const handleInputChange = () => {
-    // Don't process input during IME composition
+    // IME入力中は処理しない
     if (isComposing) return;
     
     if (inputRef.current) {
@@ -123,21 +123,21 @@ export default function TextHighlighter() {
     }
   };
 
-  // IME composition event handlers
+  // IMEコンポジションイベントハンドラ
   const handleCompositionStart = () => {
     setIsComposing(true);
   };
 
   const handleCompositionEnd = () => {
     setIsComposing(false);
-    // Process the final composition result
+    // 最終的な入力結果を処理
     if (inputRef.current) {
       saveCursorPosition();
       setInputText(inputRef.current.textContent || '');
     }
   };
 
-  // Set cursor position to a specific offset from the start
+  // 特定のオフセットからカーソル位置を設定
   const setCursorToPosition = (position: number) => {
     if (!inputRef.current || !isFocused || isComposing) return;
     
@@ -149,9 +149,9 @@ export default function TextHighlighter() {
       let currentNode = inputRef.current.firstChild;
       let currentPos = 0;
       
-      // Edge case: empty or no content
+      // エッジケース：空または内容なし
       if (!currentNode) {
-        // Create an empty text node
+        // 空のテキストノードを作成
         const textNode = document.createTextNode('');
         inputRef.current.appendChild(textNode);
         range.setStart(textNode, 0);
@@ -161,15 +161,15 @@ export default function TextHighlighter() {
         return;
       }
       
-      // Navigate through nodes to find position
+      // 位置を見つけるためにノードを巡回
       let foundPosition = false;
       while (currentNode && !foundPosition) {
-        // Handle text nodes
+        // テキストノードを処理
         if (currentNode.nodeType === Node.TEXT_NODE) {
           const nodeLength = currentNode.textContent?.length || 0;
           
           if (currentPos + nodeLength >= position) {
-            // Found the node where the cursor should be
+            // カーソルを置くべきノードが見つかった
             const offset = position - currentPos;
             range.setStart(currentNode, Math.min(offset, nodeLength));
             range.collapse(true);
@@ -179,17 +179,17 @@ export default function TextHighlighter() {
           }
         }
         
-        // Move to next node if not found
+        // 見つからなかった場合は次のノードに移動
         if (!foundPosition && currentNode.nextSibling) {
           currentNode = currentNode.nextSibling;
         } else if (!foundPosition) {
-          // If reached the end, set to last position
+          // 終わりに達した場合、最後の位置に設定
           const lastNode = findLastTextNode(inputRef.current);
           if (lastNode) {
             range.setStart(lastNode, lastNode.textContent?.length || 0);
             range.collapse(true);
           } else {
-            // Fallback to element itself if no text nodes
+            // テキストノードがない場合は要素自体にフォールバック
             range.setStart(inputRef.current, 0);
             range.collapse(true);
           }
@@ -200,9 +200,9 @@ export default function TextHighlighter() {
       selection.removeAllRanges();
       selection.addRange(range);
     } catch (error) {
-      console.error("Error setting cursor position:", error);
+      console.error("カーソル位置の設定中にエラーが発生しました:", error);
       
-      // Fallback: set cursor at the end
+      // フォールバック：カーソルを最後に設定
       try {
         const selection = window.getSelection();
         if (selection) {
@@ -211,18 +211,18 @@ export default function TextHighlighter() {
           
           if (lastNode) {
             range.selectNodeContents(lastNode);
-            range.collapse(false); // collapse to end
+            range.collapse(false); // 末尾に折りたたむ
             selection.removeAllRanges();
             selection.addRange(range);
           }
         }
       } catch (fallbackError) {
-        console.error("Fallback cursor positioning failed:", fallbackError);
+        console.error("フォールバックカーソル位置決めに失敗しました:", fallbackError);
       }
     }
   };
   
-  // Helper function to find the last text node in an element
+  // 要素内の最後のテキストノードを見つけるヘルパー関数
   const findLastTextNode = (element: Node | null): Node | null => {
     if (!element) return null;
     
@@ -241,11 +241,11 @@ export default function TextHighlighter() {
     return lastTextNode;
   };
 
-  // Handle document-wide mousemove to check if mouse is over highlighted span
+  // マウスがハイライトされたスパンの上にあるかをチェックするドキュメント全体のマウス移動を処理
   const handleDocumentMouseMove = (e: MouseEvent) => {
     if (!inputRef.current || isComposing) return;
 
-    // Get all highlighted spans
+    // ハイライトされたすべてのスパンを取得
     const highlightedSpans = inputRef.current.querySelectorAll('span[data-highlighted="true"]');
     
     let foundSpan = null;
@@ -262,7 +262,7 @@ export default function TextHighlighter() {
       }
     }
 
-    // Clear any existing timeout
+    // 既存のタイムアウトをクリア
     if (tooltipTimeoutRef.current) {
       clearTimeout(tooltipTimeoutRef.current);
       tooltipTimeoutRef.current = null;
@@ -270,7 +270,7 @@ export default function TextHighlighter() {
 
     if (foundSpan) {
       const rect = foundSpan.getBoundingClientRect();
-      // Use a small delay to avoid flickering
+      // ちらつきを避けるために小さな遅延を使用
       tooltipTimeoutRef.current = setTimeout(() => {
         setTooltip({
           visible: true,
@@ -284,36 +284,36 @@ export default function TextHighlighter() {
     }
   };
 
-  // Add document-wide mouse tracking
+  // ドキュメント全体のマウストラッキングを追加
   useEffect(() => {
     document.addEventListener('mousemove', handleDocumentMouseMove);
     return () => {
       document.removeEventListener('mousemove', handleDocumentMouseMove);
-      // Clear any existing timeout on unmount
+      // アンマウント時に既存のタイムアウトをクリア
       if (tooltipTimeoutRef.current) {
         clearTimeout(tooltipTimeoutRef.current);
       }
     };
   }, [comparisonText, isComposing]);
 
-  // Update the contentEditable div when inputText changes
+  // inputTextが変更されたときにcontentEditableのdivを更新
   useEffect(() => {
-    // Skip updating during IME composition
+    // IME入力中はスキップ
     if (isComposing) return;
     
     if (inputRef.current) {
-      // If there's no text and not focused, don't update the DOM
+      // テキストがなく、フォーカスもない場合はDOMを更新しない
       if (!inputText && !isFocused) {
         return;
       }
       
-      // Store current cursor position
+      // 現在のカーソル位置を保存
       const pos = cursorPosition;
       
-      // Clear the current content
+      // 現在の内容をクリア
       inputRef.current.innerHTML = '';
       
-      // Add the styled segments
+      // スタイル付きのセグメントを追加
       const segments = getHighlightedSegments();
       segments.forEach(segment => {
         const span = document.createElement('span');
@@ -324,13 +324,13 @@ export default function TextHighlighter() {
           span.style.textDecorationColor = 'red';
           span.style.textDecorationThickness = '2px';
           span.style.cursor = 'help';
-          span.dataset.highlighted = 'true'; // Add a data attribute to identify highlighted spans
+          span.dataset.highlighted = 'true'; // ハイライトされたスパンを識別するためのデータ属性を追加
         }
         
         inputRef.current?.appendChild(span);
       });
       
-      // Restore cursor position
+      // カーソル位置を復元
       if (isFocused && !isComposing) {
         setTimeout(() => {
           setCursorToPosition(pos);
@@ -342,7 +342,7 @@ export default function TextHighlighter() {
   const handleFocus = () => {
     setIsFocused(true);
     
-    // Clear placeholder if it exists
+    // プレースホルダーが存在する場合はクリア
     if (inputRef.current && !inputText) {
       inputRef.current.innerHTML = '';
     }
@@ -351,13 +351,13 @@ export default function TextHighlighter() {
   const handleBlur = () => {
     setIsFocused(false);
     
-    // Show placeholder if there's no text
+    // テキストがない場合はプレースホルダーを表示
     if (inputRef.current && !inputText) {
       inputRef.current.innerHTML = '<span class="text-gray-400">Type something...</span>';
     }
   };
 
-  // Set initial placeholder
+  // 初期プレースホルダーを設定
   useEffect(() => {
     if (inputRef.current && !inputText && !isFocused) {
       inputRef.current.innerHTML = '<span class="text-gray-400">Type something...</span>';
@@ -403,20 +403,20 @@ export default function TextHighlighter() {
           suppressContentEditableWarning
         />
         
-        {/* Tooltip - Positioned relative to document */}
+        {/* ツールチップ - ドキュメントに対して相対的に配置 */}
         {tooltip.visible && (
           <div
             className="fixed z-50 bg-gray-800 text-white px-3 py-2 rounded-lg text-sm shadow-lg"
             style={{
               left: `${tooltip.x}px`,
-              top: `${tooltip.y - 10}px`, // Position above with offset
-              transform: 'translate(-50%, -100%)', // Center horizontally and move up
+              top: `${tooltip.y - 10}px`, // 上部にオフセットで配置
+              transform: 'translate(-50%, -100%)', // 水平方向に中央揃え、上方向に移動
               maxWidth: '250px',
               pointerEvents: 'none',
             }}
           >
             <p>{tooltip.text}</p>
-            {/* Arrow pointing down */}
+            {/* 下向きの矢印 */}
             <div 
               className="absolute w-3 h-3 bg-gray-800 transform rotate-45"
               style={{
